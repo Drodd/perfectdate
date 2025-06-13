@@ -274,39 +274,86 @@ function adjustChoicesPosition() {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
-    // 使用默认16:9比例计算（快速同步计算）
-    const imageAspectRatio = 16 / 9;
+    // 创建一个临时图片对象来获取实际尺寸
+    const tempImg = new Image();
+    tempImg.onload = function() {
+        const imageAspectRatio = this.naturalWidth / this.naturalHeight;
+        
+        let imageDisplayWidth, imageDisplayHeight;
+        
+        if (windowWidth / windowHeight > imageAspectRatio) {
+            // 窗口比图片宽，图片受高度限制
+            imageDisplayHeight = windowHeight;
+            imageDisplayWidth = windowHeight * imageAspectRatio;
+        } else {
+            // 窗口比图片高，图片受宽度限制
+            imageDisplayWidth = windowWidth;
+            imageDisplayHeight = windowWidth / imageAspectRatio;
+        }
+        
+        // 计算图片在窗口中的位置
+        const imageTop = (windowHeight - imageDisplayHeight) / 2;
+        const imageBottom = imageTop + imageDisplayHeight;
+        
+        // 获取选项容器的实际高度
+        const containerHeight = choicesContainer.offsetHeight || 200; // 预估高度
+        
+        // 移动端优化：确保选项完全在屏幕内
+        const isMobile = windowWidth <= 768;
+        const bottomMargin = isMobile ? 20 : 50; // 移动端使用更小的边距
+        
+        // 如果图片下方空间不足以容纳选项容器，调整位置
+        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
+            // 空间不足，将选项放在图片底部内侧
+            choicesContainer.classList.add('positioned');
+            choicesContainer.style.bottom = 'auto';
+            const topPosition = Math.max(imageBottom - containerHeight - 30, 20); // 确保不超出屏幕顶部
+            choicesContainer.style.top = `${topPosition}px`;
+        } else {
+            // 空间充足，使用正常bottom定位
+            choicesContainer.classList.remove('positioned');
+            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
+            choicesContainer.style.top = 'auto';
+        }
+    };
     
-    let imageDisplayWidth, imageDisplayHeight;
-    
-    if (windowWidth / windowHeight > imageAspectRatio) {
-        imageDisplayHeight = windowHeight;
-        imageDisplayWidth = windowHeight * imageAspectRatio;
+    // 尝试从背景图片获取实际尺寸
+    const computedStyle = window.getComputedStyle(backgroundMain);
+    const backgroundImage = computedStyle.backgroundImage;
+    if (backgroundImage && backgroundImage !== 'none') {
+        const imageUrl = backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
+        tempImg.src = imageUrl;
     } else {
-        imageDisplayWidth = windowWidth;
-        imageDisplayHeight = windowWidth / imageAspectRatio;
-    }
-    
-    const imageTop = (windowHeight - imageDisplayHeight) / 2;
-    const imageBottom = imageTop + imageDisplayHeight;
-    
-    // 获取选项容器的实际高度，如果没有内容则使用预估值
-    const containerHeight = choicesContainer.offsetHeight || 135; // 2个按钮的预估高度
-    const isMobile = windowWidth <= 768;
-    const bottomMargin = isMobile ? 20 : 50;
-    
-    // 如果图片下方空间不足以容纳选项容器，调整位置
-    if (windowHeight - imageBottom < containerHeight + bottomMargin) {
-        // 空间不足，将选项放在图片底部内侧
-        choicesContainer.classList.add('positioned');
-        choicesContainer.style.bottom = 'auto';
-        const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
-        choicesContainer.style.top = `${topPosition}px`;
-    } else {
-        // 空间充足，使用正常bottom定位
-        choicesContainer.classList.remove('positioned');
-        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
-        choicesContainer.style.top = 'auto';
+        // 如果无法获取图片，使用默认16:9比例
+        const imageAspectRatio = 16 / 9;
+        
+        let imageDisplayWidth, imageDisplayHeight;
+        
+        if (windowWidth / windowHeight > imageAspectRatio) {
+            imageDisplayHeight = windowHeight;
+            imageDisplayWidth = windowHeight * imageAspectRatio;
+        } else {
+            imageDisplayWidth = windowWidth;
+            imageDisplayHeight = windowWidth / imageAspectRatio;
+        }
+        
+        const imageTop = (windowHeight - imageDisplayHeight) / 2;
+        const imageBottom = imageTop + imageDisplayHeight;
+        
+        const containerHeight = choicesContainer.offsetHeight || 200;
+        const isMobile = windowWidth <= 768;
+        const bottomMargin = isMobile ? 20 : 50;
+        
+        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
+            choicesContainer.classList.add('positioned');
+            choicesContainer.style.bottom = 'auto';
+            const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
+            choicesContainer.style.top = `${topPosition}px`;
+        } else {
+            choicesContainer.classList.remove('positioned');
+            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
+            choicesContainer.style.top = 'auto';
+        }
     }
 }
 
@@ -376,9 +423,6 @@ function initGame() {
     const dialogueBubbles = document.getElementById('dialogueBubbles');
     dialogueBubbles.innerHTML = '';
     
-    // 初始化时就设置好选项容器位置
-    adjustChoicesPosition();
-    
     // 添加开场气泡
     const narratorText = '这是你们第一次见面...';
     addDialogueBubble(narratorText, 'narrator');
@@ -430,7 +474,7 @@ function addDialogueBubble(dialogue, type) {
     // 将新气泡插入到容器顶部
     dialogueBubbles.insertBefore(bubble, dialogueBubbles.firstChild);
     
-    // 限制气泡数量，移除过多的旧气泡
+    // 限制气泡数量，避免过多气泡挤压
     manageBubbleCount(dialogueBubbles);
     
     // 触发出现动画
@@ -575,9 +619,6 @@ function updateGameDisplay() {
         // 清空并准备显示新选项
         choicesContainer.innerHTML = '';
         
-        // 先调整位置，再创建按钮
-        adjustChoicesPosition();
-        
         // 获取历史选择
         const history = getGameHistory();
         const playerChoices = gameState.playerRole === 'male' ? history.maleChoices : history.femaleChoices;
@@ -597,17 +638,22 @@ function updateGameDisplay() {
             button.innerHTML = buttonText;
             button.onclick = () => makeChoice(choice, true);
             choicesContainer.appendChild(button);
-            
-            // 触发入场动画，每个按钮有延迟
-            setTimeout(() => {
-                button.classList.add('show');
-            }, index * 100 + 50);
         });
         
-        // 在按钮创建完成后再次微调位置
+        // 先调整选项容器位置，等位置稳定后再播放入场动画
         setTimeout(() => {
             adjustChoicesPosition();
-        }, 100);
+            
+            // 位置调整完成后，再触发按钮入场动画
+            setTimeout(() => {
+                const buttons = choicesContainer.querySelectorAll('.choice-button');
+                buttons.forEach((button, index) => {
+                    setTimeout(() => {
+                        button.classList.add('show');
+                    }, index * 100);
+                });
+            }, 50); // 给位置调整一点时间
+        }, 50);
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
         if (choicesContainer.innerHTML !== '') {
