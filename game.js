@@ -253,6 +253,105 @@ const endings = {
     }
 };
 
+// 更新角色选择卡片状态
+function updateCharacterCards() {
+    // 这个函数用于更新角色选择卡片的视觉状态
+    // 由于当前的角色选择是在结局弹窗中进行的，这里可以是空函数
+    // 或者用于更新其他相关的UI状态
+    
+    // 如果需要更新某些UI状态，可以在这里添加代码
+    console.log('角色选择更新:', gameState.playerRole);
+}
+
+// 调整选项容器位置，确保在图片范围内
+function adjustChoicesPosition() {
+    const choicesContainer = document.getElementById('choicesContainer');
+    const backgroundMain = document.getElementById('backgroundMain');
+    
+    if (!choicesContainer || !backgroundMain) return;
+    
+    // 获取窗口尺寸
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 创建一个临时图片对象来获取实际尺寸
+    const tempImg = new Image();
+    tempImg.onload = function() {
+        const imageAspectRatio = this.naturalWidth / this.naturalHeight;
+        
+        let imageDisplayWidth, imageDisplayHeight;
+        
+        if (windowWidth / windowHeight > imageAspectRatio) {
+            // 窗口比图片宽，图片受高度限制
+            imageDisplayHeight = windowHeight;
+            imageDisplayWidth = windowHeight * imageAspectRatio;
+        } else {
+            // 窗口比图片高，图片受宽度限制
+            imageDisplayWidth = windowWidth;
+            imageDisplayHeight = windowWidth / imageAspectRatio;
+        }
+        
+        // 计算图片在窗口中的位置
+        const imageTop = (windowHeight - imageDisplayHeight) / 2;
+        const imageBottom = imageTop + imageDisplayHeight;
+        
+        // 如果图片底部距离窗口底部有较大空间（超过200px），调整选项位置
+        if (windowHeight - imageBottom > 200) {
+            // 图片下方有大片空白区域，将选项放在图片底部附近
+            choicesContainer.classList.add('positioned');
+            choicesContainer.style.bottom = 'auto';
+            choicesContainer.style.top = `${imageBottom - 150}px`; // 距离图片底部150px
+        } else {
+            // 图片占据了大部分屏幕或全屏，使用正常bottom定位
+            choicesContainer.classList.remove('positioned');
+            choicesContainer.style.bottom = '2%';
+            choicesContainer.style.top = 'auto';
+        }
+    };
+    
+    // 尝试从背景图片获取实际尺寸
+    const computedStyle = window.getComputedStyle(backgroundMain);
+    const backgroundImage = computedStyle.backgroundImage;
+    if (backgroundImage && backgroundImage !== 'none') {
+        const imageUrl = backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
+        tempImg.src = imageUrl;
+    } else {
+        // 如果无法获取图片，使用默认16:9比例
+        const imageAspectRatio = 16 / 9;
+        
+        let imageDisplayWidth, imageDisplayHeight;
+        
+        if (windowWidth / windowHeight > imageAspectRatio) {
+            imageDisplayHeight = windowHeight;
+            imageDisplayWidth = windowHeight * imageAspectRatio;
+        } else {
+            imageDisplayWidth = windowWidth;
+            imageDisplayHeight = windowWidth / imageAspectRatio;
+        }
+        
+        const imageTop = (windowHeight - imageDisplayHeight) / 2;
+        const imageBottom = imageTop + imageDisplayHeight;
+        
+        if (windowHeight - imageBottom > 200) {
+            choicesContainer.classList.add('positioned');
+            choicesContainer.style.bottom = 'auto';
+            choicesContainer.style.top = `${imageBottom - 150}px`;
+        } else {
+            choicesContainer.classList.remove('positioned');
+            choicesContainer.style.bottom = '2%';
+            choicesContainer.style.top = 'auto';
+        }
+    }
+}
+
+// 在窗口大小改变时重新调整位置
+function handleResize() {
+    adjustChoicesPosition();
+}
+
+// 添加窗口大小改变监听器
+window.addEventListener('resize', handleResize);
+
 // 开始游戏
 function startGame() {
     // 隐藏标题界面
@@ -276,6 +375,8 @@ function selectCharacter(role) {
     // 更新重新开始时的默认选择
     selectedCharacterForRestart = role;
     
+    updateCharacterCards();
+    
     // 角色显示已移除
     
     // 重置失败背景（仅在游戏重启时）
@@ -290,6 +391,11 @@ function selectCharacter(role) {
     endingMessage.classList.add('hidden');
     endingMessage.classList.remove('show');
     initGame();
+    
+    // 初始位置调整
+    setTimeout(() => {
+        adjustChoicesPosition();
+    }, 200);
 }
 
 // 初始化游戏
@@ -525,6 +631,11 @@ function updateGameDisplay() {
                 button.classList.add('show');
             }, index * 100 + 50);
         });
+        
+        // 调整选项容器位置
+        setTimeout(() => {
+            adjustChoicesPosition();
+        }, 100);
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
         if (choicesContainer.innerHTML !== '') {
