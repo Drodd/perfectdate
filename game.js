@@ -263,6 +263,53 @@ function updateCharacterCards() {
     console.log('角色选择更新:', gameState.playerRole);
 }
 
+// 初始化选项容器位置
+function initializeChoicesPosition() {
+    const choicesContainer = document.getElementById('choicesContainer');
+    const backgroundMain = document.getElementById('backgroundMain');
+    
+    if (!choicesContainer || !backgroundMain) return;
+    
+    // 获取窗口尺寸
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 使用默认16:9比例计算
+    const imageAspectRatio = 16 / 9;
+    
+    let imageDisplayWidth, imageDisplayHeight;
+    
+    if (windowWidth / windowHeight > imageAspectRatio) {
+        imageDisplayHeight = windowHeight;
+        imageDisplayWidth = windowHeight * imageAspectRatio;
+    } else {
+        imageDisplayWidth = windowWidth;
+        imageDisplayHeight = windowWidth / imageAspectRatio;
+    }
+    
+    const imageTop = (windowHeight - imageDisplayHeight) / 2;
+    const imageBottom = imageTop + imageDisplayHeight;
+    
+    // 预估最大可能的容器高度（2个选项的情况）
+    const maxEstimatedHeight = 2 * 60 + 15; // 2个按钮 + 1个间距
+    const isMobile = windowWidth <= 768;
+    const bottomMargin = isMobile ? 20 : 50;
+    
+    // 根据空间情况设置位置策略
+    if (windowHeight - imageBottom < maxEstimatedHeight + bottomMargin) {
+        // 空间不足，使用positioned模式
+        choicesContainer.classList.add('positioned');
+        choicesContainer.style.bottom = 'auto';
+        const topPosition = Math.max(imageBottom - maxEstimatedHeight - 30, 20);
+        choicesContainer.style.top = `${topPosition}px`;
+    } else {
+        // 空间充足，使用bottom定位
+        choicesContainer.classList.remove('positioned');
+        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
+        choicesContainer.style.top = 'auto';
+    }
+}
+
 // 基于指定高度调整选项容器位置
 function adjustChoicesPositionWithHeight(containerHeight) {
     const choicesContainer = document.getElementById('choicesContainer');
@@ -401,7 +448,7 @@ function adjustChoicesPosition() {
 
 // 在窗口大小改变时重新调整位置
 function handleResize() {
-    adjustChoicesPosition();
+    initializeChoicesPosition();
 }
 
 // 添加窗口大小改变监听器
@@ -449,7 +496,7 @@ function selectCharacter(role) {
     
     // 初始位置调整
     setTimeout(() => {
-        adjustChoicesPosition();
+        initializeChoicesPosition();
     }, 200);
 }
 
@@ -464,6 +511,9 @@ function initGame() {
     // 清空对话气泡
     const dialogueBubbles = document.getElementById('dialogueBubbles');
     dialogueBubbles.innerHTML = '';
+    
+    // 初始化时就设置好选项容器位置
+    initializeChoicesPosition();
     
     // 添加开场气泡
     const narratorText = '这是你们第一次见面...';
@@ -516,7 +566,7 @@ function addDialogueBubble(dialogue, type) {
     // 将新气泡插入到容器顶部
     dialogueBubbles.insertBefore(bubble, dialogueBubbles.firstChild);
     
-    // 限制气泡数量，避免过多气泡挤压
+    // 限制气泡数量，移除过多的旧气泡
     manageBubbleCount(dialogueBubbles);
     
     // 触发出现动画
@@ -661,11 +711,6 @@ function updateGameDisplay() {
         // 清空并准备显示新选项
         choicesContainer.innerHTML = '';
         
-        // 先调整容器位置，再创建按钮，避免动画冲突
-        // 使用预估高度进行初始调整
-        const estimatedHeight = currentPlotData.choices.length * 60 + (currentPlotData.choices.length - 1) * 15; // 按钮高度 + 间距
-        adjustChoicesPositionWithHeight(estimatedHeight);
-        
         // 获取历史选择
         const history = getGameHistory();
         const playerChoices = gameState.playerRole === 'male' ? history.maleChoices : history.femaleChoices;
@@ -692,11 +737,7 @@ function updateGameDisplay() {
             }, index * 100 + 50);
         });
         
-        // 在所有按钮动画完成后调整位置，确保基于实际高度计算且不干扰动画
-        const totalAnimationTime = currentPlotData.choices.length * 100 + 200; // 增加一点缓冲时间
-        setTimeout(() => {
-            adjustChoicesPosition();
-        }, totalAnimationTime);
+        // 位置已经在初始化时设置好，不需要动画后再调整
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
         if (choicesContainer.innerHTML !== '') {
