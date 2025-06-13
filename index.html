@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完美约会</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: url('./img/img_bg.png') center center;
+            background-size: cover;
+            background-attachment: fixed;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background-fail {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('./img/img_bg_fail.png') center center;
+            background-size: cover;
+            background-attachment: fixed;
+            opacity: 1;
+            z-index: 1;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+        }
+
+        .background-fail.hide {
+            opacity: 0;
+        }
+
+        .background-fail.show {
+            opacity: 1;
+        }
+
+        .title-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            background: rgba(30, 20, 15, 0.4);
+            backdrop-filter: blur(2px);
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .title-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title-content {
+            text-align: center;
+            color: #F5E6F0;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(60, 40, 30, 0.8);
+            border: 2px solid rgba(120, 80, 60, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: titleFadeIn 1s ease-out;
+        }
+
+        .game-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            background: linear-gradient(45deg, #2D3755, #966E8C, #C5D0E8, #F5E6F0);
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes titleFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .game-description {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            opacity: 0.9;
+            color: rgba(240, 220, 200, 0.9);
+        }
+
+        .start-button {
+            background: linear-gradient(45deg, rgba(45, 55, 85, 0.9), rgba(150, 110, 140, 0.9));
+            color: #F5E6F0;
+            border: 2px solid rgba(120, 80, 60, 0.8);
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, rgba(55, 65, 95, 1), rgba(160, 120, 150, 1));
+            border-color: rgba(140, 90, 70, 1);
+        }
+
+        .start-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.5rem;
+            }
+            
+            .game-description {
+                font-size: 1rem;
+                color: rgba(240, 220, 200, 0.9);
+            }
+            
+            .title-content {
+                margin: 20px;
+                padding: 30px 20px;
+                background: rgba(60, 40, 30, 0.85);
+                border: 2px solid rgba(120, 80, 60, 0.7);
+            }
+            
+            .start-button {
+                padding: 12px 30px;
+                font-size: 1.1rem;
+            }
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dialogue-bubbles {
+            position: absolute;
+            top: 0%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            height: 300px;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            overflow: hidden;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
+        }
+
+        .dialogue-bubble {
+            background: rgba(200, 220, 255, 0.95);
+            border-radius: 20px;
+            padding: 15px 20px;
+            max-width: 70%;
+            min-height: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            animation: bubbleAppear 0.5s ease-out forwards;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.4;
+            position: relative;
+            transition: all 0.1s ease-out;
+            white-space: pre-wrap;
+        }
+
+        .dialogue-bubble.male {
+            background: rgba(45, 55, 85, 0.95);
+            color: #C5D0E8;
+            align-self: flex-start;
+            border: 2px solid rgba(45, 55, 85, 0.8);
+        }
+
+        .dialogue-bubble.female {
+            background: rgba(180, 140, 170, 0.95);
+            color: #F5E6F0;
+            align-self: flex-end;
+            border: 2px solid rgba(150, 110, 140, 0.8);
+        }
+
+        .dialogue-bubble.narrator {
+            background: rgba(120, 80, 60, 0.95);
+            color: #F0E5D0;
+            align-self: center;
+            border: 2px solid rgba(100, 65, 45, 0.8);
+            font-style: italic;
+        }
+
+        .dialogue-bubble.waiting {
+            text-align: center;
+            font-size: 24px;
+        }
+
+        @keyframes bubbleAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes bubbleDisappear {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.7);
+            }
+        }
+
+        @keyframes endingAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.7) translateY(20px);
+            }
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.05) translateY(-5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) translateY(0);
+            }
+        }
+
+        @keyframes choiceAppear {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes choiceDisappear {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.8);
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+        }
+
+        .bubble-exit {
+            animation: bubbleDisappear 0.5s ease-out forwards;
+        }
+
+        .choices-container {
+            position: absolute;
+            bottom: 2%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .choice-button {
+            background: rgba(240, 230, 210, 0.95);
+            border: 2px solid rgba(160, 130, 100, 0.8);
+            border-radius: 25px;
+            padding: 15px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+            color: #5A4A3A;
+        }
+
+        .choice-button.show {
+            animation: choiceAppear 0.5s ease-out forwards;
+        }
+
+        .choice-button.hide {
+            animation: choiceDisappear 0.3s ease-out forwards;
+        }
+
+        .choice-button:hover {
+            background: rgba(250, 240, 220, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .choice-button.male {
+            border-color: rgba(45, 55, 85, 0.8);
+            color: #2D3755;
+        }
+
+        .choice-button.female {
+            border-color: rgba(150, 110, 140, 0.8);
+            color: #966E8C;
+        }
+
+        .choice-button.male:hover {
+            background: rgba(200, 210, 230, 0.95);
+            border-color: #2D3755;
+        }
+
+        .choice-button.female:hover {
+            background: rgba(220, 190, 210, 0.95);
+            border-color: #966E8C;
+        }
+
+        .last-choice-mark {
+            color: rgba(120, 100, 80, 0.8);
+            font-style: italic;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .ending-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(240, 230, 210, 0.98);
+            border: 2px solid rgba(160, 130, 100, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 80%;
+            z-index: 10;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7) translateY(20px);
+            color: #5A4A3A;
+        }
+
+        .ending-message.show {
+            animation: endingAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .ending-message h2 {
+            color: #966E8C;
+            margin-bottom: 15px;
+        }
+
+        .ending-message.success h2 {
+            color: #2D3755;
+        }
+
+        .ending-image {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: scale(0.9);
+            animation: imageAppear 0.8s ease-out 0.3s forwards;
+        }
+
+        @keyframes imageAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .character-selection-inline {
+            margin: 20px 0;
+        }
+
+        .character-options-inline {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .character-option-inline {
+            background: rgba(140, 120, 100, 0.7);
+            border: 2px solid rgba(100, 85, 70, 0.8);
+            color: rgba(200, 180, 160, 0.9);
+            border-radius: 15px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .character-option-inline:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background: rgba(160, 140, 120, 0.8);
+        }
+
+        .character-option-inline.male.selected {
+            background: rgba(45, 55, 85, 0.95);
+            border: 2px solid #2D3755;
+            color: #C5D0E8;
+            box-shadow: 0 0 0 2px rgba(45, 55, 85, 0.5);
+        }
+
+        .character-option-inline.female.selected {
+            background: rgba(180, 140, 170, 0.95);
+            border: 2px solid #966E8C;
+            color: #F5E6F0;
+            box-shadow: 0 0 0 2px rgba(150, 110, 140, 0.5);
+        }
+
+        .character-option-inline.male.selected:hover {
+            background: rgba(55, 65, 95, 1);
+        }
+
+        .character-option-inline.female.selected:hover {
+            background: rgba(190, 150, 180, 1);
+        }
+
+        .character-option-inline.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f0f0f0;
+            color: #999;
+            border-color: #ccc;
+        }
+
+        .character-option-inline.disabled:hover {
+            transform: none;
+            box-shadow: none;
+            background: #f0f0f0;
+        }
+
+        .retry-button {
+            background: linear-gradient(45deg, rgba(150, 110, 140, 0.9), rgba(180, 140, 170, 0.9));
+            color: #F5E6F0;
+            border: 2px solid rgba(120, 85, 110, 0.8);
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .retry-button:hover {
+            background: linear-gradient(45deg, rgba(160, 120, 150, 1), rgba(190, 150, 180, 1));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .unlock-message {
+            background: rgba(120, 80, 60, 0.2);
+            border: 1px solid rgba(100, 65, 45, 0.6);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            color: #5A4A3A;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 失败背景 -->
+    <div class="background-fail" id="backgroundFail"></div>
+    
+    <!-- 标题界面 -->
+    <div class="title-screen" id="titleScreen">
+        <div class="title-content">
+            <h1 class="game-title">完美约会</h1>
+            <p class="game-description">在温馨的咖啡厅里，你会邂逅命中注定的那个ta吗...</p>
+            <button class="start-button" onclick="startGame()">开始游戏</button>
+        </div>
+    </div>
+    
+    <!-- 游戏主界面 -->
+    <div class="game-container" id="gameContainer">
+        
+        <div class="dialogue-bubbles" id="dialogueBubbles">
+            <!-- 对话气泡将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="choices-container" id="choicesContainer">
+            <!-- 选择按钮将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="ending-message hidden" id="endingMessage">
+            <!-- 结局信息将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html> 
