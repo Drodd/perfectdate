@@ -652,7 +652,7 @@ function updateGameDisplay() {
                         button.classList.add('show');
                     }, index * 100);
                 });
-            }, 50); // 给位置调整一点时间
+            }, 500); // 延迟500ms再播放入场动画
         }, 50);
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
