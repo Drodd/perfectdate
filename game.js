@@ -263,6 +263,48 @@ function updateCharacterCards() {
     console.log('角色选择更新:', gameState.playerRole);
 }
 
+// 基于指定高度调整选项容器位置
+function adjustChoicesPositionWithHeight(containerHeight) {
+    const choicesContainer = document.getElementById('choicesContainer');
+    const backgroundMain = document.getElementById('backgroundMain');
+    
+    if (!choicesContainer || !backgroundMain) return;
+    
+    // 获取窗口尺寸
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 使用默认16:9比例快速计算（避免异步加载图片）
+    const imageAspectRatio = 16 / 9;
+    
+    let imageDisplayWidth, imageDisplayHeight;
+    
+    if (windowWidth / windowHeight > imageAspectRatio) {
+        imageDisplayHeight = windowHeight;
+        imageDisplayWidth = windowHeight * imageAspectRatio;
+    } else {
+        imageDisplayWidth = windowWidth;
+        imageDisplayHeight = windowWidth / imageAspectRatio;
+    }
+    
+    const imageTop = (windowHeight - imageDisplayHeight) / 2;
+    const imageBottom = imageTop + imageDisplayHeight;
+    
+    const isMobile = windowWidth <= 768;
+    const bottomMargin = isMobile ? 20 : 50;
+    
+    if (windowHeight - imageBottom < containerHeight + bottomMargin) {
+        choicesContainer.classList.add('positioned');
+        choicesContainer.style.bottom = 'auto';
+        const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
+        choicesContainer.style.top = `${topPosition}px`;
+    } else {
+        choicesContainer.classList.remove('positioned');
+        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
+        choicesContainer.style.top = 'auto';
+    }
+}
+
 // 调整选项容器位置，确保在图片范围内
 function adjustChoicesPosition() {
     const choicesContainer = document.getElementById('choicesContainer');
@@ -619,6 +661,11 @@ function updateGameDisplay() {
         // 清空并准备显示新选项
         choicesContainer.innerHTML = '';
         
+        // 先调整容器位置，再创建按钮，避免动画冲突
+        // 使用预估高度进行初始调整
+        const estimatedHeight = currentPlotData.choices.length * 60 + (currentPlotData.choices.length - 1) * 15; // 按钮高度 + 间距
+        adjustChoicesPositionWithHeight(estimatedHeight);
+        
         // 获取历史选择
         const history = getGameHistory();
         const playerChoices = gameState.playerRole === 'male' ? history.maleChoices : history.femaleChoices;
@@ -645,13 +692,8 @@ function updateGameDisplay() {
             }, index * 100 + 50);
         });
         
-        // 调整选项容器位置
-        setTimeout(() => {
-            adjustChoicesPosition();
-        }, 100);
-        
-        // 在所有按钮动画完成后再次调整位置，确保基于实际高度计算
-        const totalAnimationTime = currentPlotData.choices.length * 100 + 150;
+        // 在所有按钮动画完成后调整位置，确保基于实际高度计算且不干扰动画
+        const totalAnimationTime = currentPlotData.choices.length * 100 + 200; // 增加一点缓冲时间
         setTimeout(() => {
             adjustChoicesPosition();
         }, totalAnimationTime);

@@ -546,6 +546,46 @@
         .hidden {
             display: none !important;
         }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .choices-container {
+                width: 90%;
+                gap: 10px;
+                padding: 0 10px;
+            }
+            
+            .choice-button {
+                padding: 12px 20px;
+                font-size: 14px;
+                border-radius: 20px;
+            }
+            
+            .dialogue-bubbles {
+                width: 90%;
+                height: 250px;
+            }
+            
+            .dialogue-bubble {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .choices-container {
+                gap: 8px;
+            }
+            
+            .choice-button {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+            
+            .dialogue-bubbles {
+                height: 200px;
+            }
+        }
     </style>
 </head>
 <body>
