@@ -263,95 +263,6 @@ function updateCharacterCards() {
     console.log('角色选择更新:', gameState.playerRole);
 }
 
-// 初始化选项容器位置
-function initializeChoicesPosition() {
-    const choicesContainer = document.getElementById('choicesContainer');
-    const backgroundMain = document.getElementById('backgroundMain');
-    
-    if (!choicesContainer || !backgroundMain) return;
-    
-    // 获取窗口尺寸
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // 使用默认16:9比例计算
-    const imageAspectRatio = 16 / 9;
-    
-    let imageDisplayWidth, imageDisplayHeight;
-    
-    if (windowWidth / windowHeight > imageAspectRatio) {
-        imageDisplayHeight = windowHeight;
-        imageDisplayWidth = windowHeight * imageAspectRatio;
-    } else {
-        imageDisplayWidth = windowWidth;
-        imageDisplayHeight = windowWidth / imageAspectRatio;
-    }
-    
-    const imageTop = (windowHeight - imageDisplayHeight) / 2;
-    const imageBottom = imageTop + imageDisplayHeight;
-    
-    // 预估最大可能的容器高度（2个选项的情况）
-    const maxEstimatedHeight = 2 * 60 + 15; // 2个按钮 + 1个间距
-    const isMobile = windowWidth <= 768;
-    const bottomMargin = isMobile ? 20 : 50;
-    
-    // 根据空间情况设置位置策略
-    if (windowHeight - imageBottom < maxEstimatedHeight + bottomMargin) {
-        // 空间不足，使用positioned模式
-        choicesContainer.classList.add('positioned');
-        choicesContainer.style.bottom = 'auto';
-        const topPosition = Math.max(imageBottom - maxEstimatedHeight - 30, 20);
-        choicesContainer.style.top = `${topPosition}px`;
-    } else {
-        // 空间充足，使用bottom定位
-        choicesContainer.classList.remove('positioned');
-        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
-        choicesContainer.style.top = 'auto';
-    }
-}
-
-// 基于指定高度调整选项容器位置
-function adjustChoicesPositionWithHeight(containerHeight) {
-    const choicesContainer = document.getElementById('choicesContainer');
-    const backgroundMain = document.getElementById('backgroundMain');
-    
-    if (!choicesContainer || !backgroundMain) return;
-    
-    // 获取窗口尺寸
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // 使用默认16:9比例快速计算（避免异步加载图片）
-    const imageAspectRatio = 16 / 9;
-    
-    let imageDisplayWidth, imageDisplayHeight;
-    
-    if (windowWidth / windowHeight > imageAspectRatio) {
-        imageDisplayHeight = windowHeight;
-        imageDisplayWidth = windowHeight * imageAspectRatio;
-    } else {
-        imageDisplayWidth = windowWidth;
-        imageDisplayHeight = windowWidth / imageAspectRatio;
-    }
-    
-    const imageTop = (windowHeight - imageDisplayHeight) / 2;
-    const imageBottom = imageTop + imageDisplayHeight;
-    
-    const isMobile = windowWidth <= 768;
-    const bottomMargin = isMobile ? 20 : 50;
-    
-    if (windowHeight - imageBottom < containerHeight + bottomMargin) {
-        choicesContainer.classList.add('positioned');
-        choicesContainer.style.bottom = 'auto';
-        const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
-        choicesContainer.style.top = `${topPosition}px`;
-    } else {
-        choicesContainer.classList.remove('positioned');
-        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
-        choicesContainer.style.top = 'auto';
-    }
-}
-
 // 调整选项容器位置，确保在图片范围内
 function adjustChoicesPosition() {
     const choicesContainer = document.getElementById('choicesContainer');
@@ -363,92 +274,45 @@ function adjustChoicesPosition() {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
-    // 创建一个临时图片对象来获取实际尺寸
-    const tempImg = new Image();
-    tempImg.onload = function() {
-        const imageAspectRatio = this.naturalWidth / this.naturalHeight;
-        
-        let imageDisplayWidth, imageDisplayHeight;
-        
-        if (windowWidth / windowHeight > imageAspectRatio) {
-            // 窗口比图片宽，图片受高度限制
-            imageDisplayHeight = windowHeight;
-            imageDisplayWidth = windowHeight * imageAspectRatio;
-        } else {
-            // 窗口比图片高，图片受宽度限制
-            imageDisplayWidth = windowWidth;
-            imageDisplayHeight = windowWidth / imageAspectRatio;
-        }
-        
-        // 计算图片在窗口中的位置
-        const imageTop = (windowHeight - imageDisplayHeight) / 2;
-        const imageBottom = imageTop + imageDisplayHeight;
-        
-        // 获取选项容器的实际高度
-        const containerHeight = choicesContainer.offsetHeight || 200; // 预估高度
-        
-        // 移动端优化：确保选项完全在屏幕内
-        const isMobile = windowWidth <= 768;
-        const bottomMargin = isMobile ? 20 : 50; // 移动端使用更小的边距
-        
-        // 如果图片下方空间不足以容纳选项容器，调整位置
-        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
-            // 空间不足，将选项放在图片底部内侧
-            choicesContainer.classList.add('positioned');
-            choicesContainer.style.bottom = 'auto';
-            const topPosition = Math.max(imageBottom - containerHeight - 30, 20); // 确保不超出屏幕顶部
-            choicesContainer.style.top = `${topPosition}px`;
-        } else {
-            // 空间充足，使用正常bottom定位
-            choicesContainer.classList.remove('positioned');
-            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
-            choicesContainer.style.top = 'auto';
-        }
-    };
+    // 使用默认16:9比例计算（快速同步计算）
+    const imageAspectRatio = 16 / 9;
     
-    // 尝试从背景图片获取实际尺寸
-    const computedStyle = window.getComputedStyle(backgroundMain);
-    const backgroundImage = computedStyle.backgroundImage;
-    if (backgroundImage && backgroundImage !== 'none') {
-        const imageUrl = backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
-        tempImg.src = imageUrl;
+    let imageDisplayWidth, imageDisplayHeight;
+    
+    if (windowWidth / windowHeight > imageAspectRatio) {
+        imageDisplayHeight = windowHeight;
+        imageDisplayWidth = windowHeight * imageAspectRatio;
     } else {
-        // 如果无法获取图片，使用默认16:9比例
-        const imageAspectRatio = 16 / 9;
-        
-        let imageDisplayWidth, imageDisplayHeight;
-        
-        if (windowWidth / windowHeight > imageAspectRatio) {
-            imageDisplayHeight = windowHeight;
-            imageDisplayWidth = windowHeight * imageAspectRatio;
-        } else {
-            imageDisplayWidth = windowWidth;
-            imageDisplayHeight = windowWidth / imageAspectRatio;
-        }
-        
-        const imageTop = (windowHeight - imageDisplayHeight) / 2;
-        const imageBottom = imageTop + imageDisplayHeight;
-        
-        const containerHeight = choicesContainer.offsetHeight || 200;
-        const isMobile = windowWidth <= 768;
-        const bottomMargin = isMobile ? 20 : 50;
-        
-        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
-            choicesContainer.classList.add('positioned');
-            choicesContainer.style.bottom = 'auto';
-            const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
-            choicesContainer.style.top = `${topPosition}px`;
-        } else {
-            choicesContainer.classList.remove('positioned');
-            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
-            choicesContainer.style.top = 'auto';
-        }
+        imageDisplayWidth = windowWidth;
+        imageDisplayHeight = windowWidth / imageAspectRatio;
+    }
+    
+    const imageTop = (windowHeight - imageDisplayHeight) / 2;
+    const imageBottom = imageTop + imageDisplayHeight;
+    
+    // 获取选项容器的实际高度，如果没有内容则使用预估值
+    const containerHeight = choicesContainer.offsetHeight || 135; // 2个按钮的预估高度
+    const isMobile = windowWidth <= 768;
+    const bottomMargin = isMobile ? 20 : 50;
+    
+    // 如果图片下方空间不足以容纳选项容器，调整位置
+    if (windowHeight - imageBottom < containerHeight + bottomMargin) {
+        // 空间不足，将选项放在图片底部内侧
+        choicesContainer.classList.add('positioned');
+        choicesContainer.style.bottom = 'auto';
+        const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
+        choicesContainer.style.top = `${topPosition}px`;
+    } else {
+        // 空间充足，使用正常bottom定位
+        choicesContainer.classList.remove('positioned');
+        choicesContainer.style.bottom = isMobile ? '20px' : '2%';
+        choicesContainer.style.top = 'auto';
     }
 }
 
 // 在窗口大小改变时重新调整位置
 function handleResize() {
-    initializeChoicesPosition();
+    adjustChoicesPosition();
 }
 
 // 添加窗口大小改变监听器
@@ -496,7 +360,7 @@ function selectCharacter(role) {
     
     // 初始位置调整
     setTimeout(() => {
-        initializeChoicesPosition();
+        adjustChoicesPosition();
     }, 200);
 }
 
@@ -513,7 +377,7 @@ function initGame() {
     dialogueBubbles.innerHTML = '';
     
     // 初始化时就设置好选项容器位置
-    initializeChoicesPosition();
+    adjustChoicesPosition();
     
     // 添加开场气泡
     const narratorText = '这是你们第一次见面...';
@@ -711,6 +575,9 @@ function updateGameDisplay() {
         // 清空并准备显示新选项
         choicesContainer.innerHTML = '';
         
+        // 先调整位置，再创建按钮
+        adjustChoicesPosition();
+        
         // 获取历史选择
         const history = getGameHistory();
         const playerChoices = gameState.playerRole === 'male' ? history.maleChoices : history.femaleChoices;
@@ -737,7 +604,10 @@ function updateGameDisplay() {
             }, index * 100 + 50);
         });
         
-        // 位置已经在初始化时设置好，不需要动画后再调整
+        // 在按钮创建完成后再次微调位置
+        setTimeout(() => {
+            adjustChoicesPosition();
+        }, 100);
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
         if (choicesContainer.innerHTML !== '') {
