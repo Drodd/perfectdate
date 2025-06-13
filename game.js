@@ -295,16 +295,24 @@ function adjustChoicesPosition() {
         const imageTop = (windowHeight - imageDisplayHeight) / 2;
         const imageBottom = imageTop + imageDisplayHeight;
         
-        // 如果图片底部距离窗口底部有较大空间（超过200px），调整选项位置
-        if (windowHeight - imageBottom > 200) {
-            // 图片下方有大片空白区域，将选项放在图片底部附近
+        // 获取选项容器的实际高度
+        const containerHeight = choicesContainer.offsetHeight || 200; // 预估高度
+        
+        // 移动端优化：确保选项完全在屏幕内
+        const isMobile = windowWidth <= 768;
+        const bottomMargin = isMobile ? 20 : 50; // 移动端使用更小的边距
+        
+        // 如果图片下方空间不足以容纳选项容器，调整位置
+        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
+            // 空间不足，将选项放在图片底部内侧
             choicesContainer.classList.add('positioned');
             choicesContainer.style.bottom = 'auto';
-            choicesContainer.style.top = `${imageBottom - 150}px`; // 距离图片底部150px
+            const topPosition = Math.max(imageBottom - containerHeight - 30, 20); // 确保不超出屏幕顶部
+            choicesContainer.style.top = `${topPosition}px`;
         } else {
-            // 图片占据了大部分屏幕或全屏，使用正常bottom定位
+            // 空间充足，使用正常bottom定位
             choicesContainer.classList.remove('positioned');
-            choicesContainer.style.bottom = '2%';
+            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
             choicesContainer.style.top = 'auto';
         }
     };
@@ -332,13 +340,18 @@ function adjustChoicesPosition() {
         const imageTop = (windowHeight - imageDisplayHeight) / 2;
         const imageBottom = imageTop + imageDisplayHeight;
         
-        if (windowHeight - imageBottom > 200) {
+        const containerHeight = choicesContainer.offsetHeight || 200;
+        const isMobile = windowWidth <= 768;
+        const bottomMargin = isMobile ? 20 : 50;
+        
+        if (windowHeight - imageBottom < containerHeight + bottomMargin) {
             choicesContainer.classList.add('positioned');
             choicesContainer.style.bottom = 'auto';
-            choicesContainer.style.top = `${imageBottom - 150}px`;
+            const topPosition = Math.max(imageBottom - containerHeight - 30, 20);
+            choicesContainer.style.top = `${topPosition}px`;
         } else {
             choicesContainer.classList.remove('positioned');
-            choicesContainer.style.bottom = '2%';
+            choicesContainer.style.bottom = isMobile ? '20px' : '2%';
             choicesContainer.style.top = 'auto';
         }
     }
@@ -636,6 +649,12 @@ function updateGameDisplay() {
         setTimeout(() => {
             adjustChoicesPosition();
         }, 100);
+        
+        // 在所有按钮动画完成后再次调整位置，确保基于实际高度计算
+        const totalAnimationTime = currentPlotData.choices.length * 100 + 150;
+        setTimeout(() => {
+            adjustChoicesPosition();
+        }, totalAnimationTime);
     } else {
         // AI回合：确保选择容器为空，显示等待气泡
         if (choicesContainer.innerHTML !== '') {
